@@ -47,9 +47,28 @@ services:
     labels:
       - traefik.enable=true
       - traefik.constraint-label-stack=${TRAEFIK_TAG?Variable not set}
-      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.rule=PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`)  || PathPrefix(`/webapp`)
-      - traefik.http.services.${STACK_NAME?Variable not set}-backend.loadbalancer.server.port=80
+      - traefik.http.routers.${STACK_NAME?Variable not set}-restapi-http.rule=PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`)
+      - traefik.http.services.${STACK_NAME?Variable not set}-restapi.loadbalancer.server.port=80
 
+  dashboard:
+    image: "${DOCKER_IMAGE_DASHBOARD?Variable not set}:${DASHBOARD_TAG-latest}"
+    ports:
+      - "8501:80"
+    volumes:
+      - ./services/dashboard/src/app:/src/app
+    env_file:
+      - .env
+    environment:
+      - SERVER_NAME=${DOMAIN?Variable not set}
+      - SERVER_HOST=https://${DOMAIN?Variable not set}
+    build:
+      context: ./services/dashboard/src
+      dockerfile: Dockerfile
+    labels:
+      - traefik.enable=true
+      - traefik.constraint-label-stack=${TRAEFIK_TAG?Variable not set}
+      - traefik.http.routers.${STACK_NAME?Variable not set}-dashboard-http.rule=PathPrefix(`/dashboard`)
+      - traefik.http.services.${STACK_NAME?Variable not set}-dashboard.loadbalancer.server.port=80
   # db:
   #   ports:
   #     - "54320:5432"
